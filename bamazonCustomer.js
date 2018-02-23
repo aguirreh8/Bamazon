@@ -36,9 +36,9 @@ const runUserQuery = (query) => {
 	]).then(response => {
 		const quantity = parseInt(response.buyQuantity);
 		const itemID = parseInt(response.userSelection);
-		commitTranscation(itemID, quantity);
+		checkInventory(itemID, quantity);
 	})
-}
+};
 
 const readAll = () => {
 	connection.query(
@@ -47,7 +47,20 @@ const readAll = () => {
 			runUserQuery(results);
 		}
 	)
-}
+};
+
+const checkInventory = (itemID, quantity) => {
+	connection.query("SELECT stock_quantity FROM products WHERE item_id = ?", [itemID], function(err, res) {
+		const inventory = parseInt(res[0].stock_quantity) - quantity;
+		if (inventory >= 0) {
+			commitTranscation(itemID, quantity);
+		}
+		else {
+			console.log("We're sorry, but we do not have enough in our inventory to fufill your request.");
+			continueShopping();
+		}
+	});
+};
 
 const commitTranscation = (itemID, quantity) => {
 	connection.query(
@@ -84,7 +97,6 @@ const continueShopping = () => {
 			connection.end();
 		}
 	})
-}
-
+};
 
 readAll();
